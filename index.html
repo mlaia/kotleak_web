@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KotLeak Data Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light-bg: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-header {
+            background-color: var(--secondary);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: flex-end;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            font-weight: 500;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        select, input, button {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--text);
+            background-color: var(--white);
+            transition: all 0.2s;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        select:disabled, input:disabled {
+            background-color: #f1f5f9;
+            cursor: not-allowed;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 2.8rem;
+            width: 100%;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background-color: var(--text-light);
+            cursor: not-allowed;
+        }
+        
+        #chart {
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background-color: var(--white);
+        }
+        
+        .status {
+            margin-top: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .error {
+            color: var(--danger);
+            font-weight: 500;
+        }
+        
+        .success {
+            color: var(--success);
+        }
+        
+        .band-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .band-inputs input {
+            width: 100%;
+        }
+        
+        .loading {
+            display: none;
+            margin-left: 0.75rem;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .loading.active {
+            display: inline;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 1rem;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stats-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .stats-title {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .stats-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+        
+        .freq-badge {
+            background-color: rgba(15, 23, 42, 0.1);
+            color: var(--secondary);
+        }
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px;
+            padding-right: 2.5rem;
+        }
+
+        select:disabled {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+        }
+
+        .control-group {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Improving the dropdown hover and focus states */
+        select:hover:not(:disabled) {
+            border-color: var(--primary);
+        }
+
+        /* Add more spacing to the device options for better readability */
+        #device-select option {
+            padding: 8px;
+        }
+
+        /* Consistent height for all form controls */
+        select, input, button {
+            height: 2.8rem;
+            line-height: 1.2;
+        }
+            /* Additional styling for the select wrapper */
+        .select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .select-wrapper:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 2.8rem;
+            pointer-events: none;
+            border-left: 1px solid var(--border);
+            border-radius: 0 8px 8px 0;
+            background-color: rgba(241, 245, 249, 0.3);
+        }
+        
+        .select-wrapper select {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="logo">K</div>
+        <h1>KotLeak Data Visualization Dashboard</h1>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                Authentication
+                <span class="tag" id="login-tag">Required</span>
+            </div>
+            <div class="card-body">
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" value="ido.kotler@kotleak.com" placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" value="w79ebxtv" placeholder="Enter your password">
+                    </div>
+                    
+                    <div class="control-group">
+                        <button id="login-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                <polyline points="10 17 15 12 10 7"></polyline>
+                                <line x1="15" y1="12" x2="3" y2="12"></line>
+                            </svg>
+                            Login
+                        </button>
+                        <div class="status" id="login-status">Not logged in</div>
+                        <div class="loading" id="login-loading">Processing request...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="stats-card">
+                <div class="stats-title">Device Status</div>
+                <div class="stats-value" id="device-count">0</div>
+                <div class="status">Available Devices</div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-title">Data Points</div>
+                <div class="stats-value" id="data-points">0</div>
+                <div class="status">For Selected Device/Date</div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-title">Frequency Range</div>
+                <div class="stats-value">
+                    <span id="freq-min">25000</span>-<span id="freq-max">30000</span>
+                    <span class="tag freq-badge">Hz</span>
+                </div>
+                <div class="status">Current Analysis Band</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                Visualization Controls
+                <span class="tag" id="device-tag">Select Device</span>
+            </div>
+            <div class="card-body">
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="device-select">Device</label>
+                        <div class="select-wrapper">
+                            <select id="device-select" disabled>
+                                <option value="">-- Select a device --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="date-picker">Date</label>
+                        <input type="date" id="date-picker" disabled>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Frequency Band (Hz)</label>
+                        <div class="band-inputs">
+                            <input type="number" id="band-min" value="25000" min="0">
+                            <span>to</span>
+                            <input type="number" id="band-max" value="30000" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <button id="plot-btn" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                                <line x1="12" y1="20" x2="12" y2="10"></line>
+                                <line x1="18" y1="20" x2="18" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="16"></line>
+                            </svg>
+                            Generate Chart
+                        </button>
+                        <div class="status" id="plot-status">No data selected</div>
+                        <div class="loading" id="plot-loading">Processing data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                Data Visualization
+                <span class="tag" id="chart-tag">Waiting for input</span>
+            </div>
+            <div class="card-body">
+                <div id="chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const LOGIN_URL = 'https://kotleak.net/main/login';
+        const FACILITY_URL = 'https://kotleak.net/client/facility?id=67112cc95bb6aedaf3f81fa1';
+        const DEVICE_LOGS_URL = 'https://kotleak.net/client/device/logs?id={}&skip=0&limit=100000';
+        
+        // State variables
+        let token = null;
+        let deviceData = {};
+        let selectedDevice = null;
+        let availableDates = new Set();
+        let deviceCount = 0;
+        let currentDataPoints = 0;
+        
+        // DOM elements
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const loginStatus = document.getElementById('login-status');
+        const loginLoading = document.getElementById('login-loading');
+        const loginTag = document.getElementById('login-tag');
+        const deviceSelect = document.getElementById('device-select');
+        const datePicker = document.getElementById('date-picker');
+        const bandMin = document.getElementById('band-min');
+        const bandMax = document.getElementById('band-max');
+        const freqMin = document.getElementById('freq-min');
+        const freqMax = document.getElementById('freq-max');
+        const plotBtn = document.getElementById('plot-btn');
+        const plotStatus = document.getElementById('plot-status');
+        const plotLoading = document.getElementById('plot-loading');
+        const chartDiv = document.getElementById('chart');
+        const deviceTag = document.getElementById('device-tag');
+        const chartTag = document.getElementById('chart-tag');
+        const deviceCountElement = document.getElementById('device-count');
+        const dataPointsElement = document.getElementById('data-points');
+        
+        // Initialize date picker with today's date
+        const today = new Date();
+        datePicker.value = formatDate(today);
+        
+        // Event listeners
+        loginBtn.addEventListener('click', handleLogin);
+        deviceSelect.addEventListener('change', handleDeviceSelect);
+        plotBtn.addEventListener('click', generatePlot);
+        
+        // Update frequency band display when inputs change
+        bandMin.addEventListener('input', () => {
+            freqMin.textContent = bandMin.value;
+        });
+        
+        bandMax.addEventListener('input', () => {
+            freqMax.textContent = bandMax.value;
+        });
+        
+        // Helper function to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Helper function to parse ISO date string
+        function parseISODate(isoString) {
+            return new Date(isoString);
+        }
+        
+        // Helper to extract date from ISO date string (YYYY-MM-DD)
+        function extractDatePart(isoString) {
+            return isoString.split('T')[0];
+        }
+        
+        // Login function
+        async function handleLogin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                loginStatus.textContent = 'Email and password are required';
+                loginStatus.className = 'status error';
+                return;
+            }
+            
+            try {
+                loginLoading.classList.add('active');
+                loginStatus.textContent = 'Authenticating...';
+                loginStatus.className = 'status';
+                loginTag.textContent = 'Authenticating';
+                
+                // Login request
+                const loginResponse = await fetch(LOGIN_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginResponse.ok && !loginData.error) {
+                    token = loginData.data.token;
+                    loginStatus.textContent = 'Login successful';
+                    loginStatus.className = 'status success';
+                    loginTag.textContent = 'Authenticated';
+                    loginTag.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    loginTag.style.color = 'var(--success)';
+                    
+                    // Now fetch device IDs
+                    await fetchDevices();
+                    
+                    // Enable device selection
+                    deviceSelect.disabled = false;
+                    deviceTag.textContent = 'Ready';
+                    
+                } else {
+                    const errorMessage = loginData.err || 'Login failed';
+                    loginStatus.textContent = `Error: ${errorMessage}`;
+                    loginStatus.className = 'status error';
+                    loginTag.textContent = 'Failed';
+                    loginTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    loginTag.style.color = 'var(--danger)';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                loginStatus.textContent = `Error: ${error.message}`;
+                loginStatus.className = 'status error';
+                loginTag.textContent = 'Error';
+                loginTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                loginTag.style.color = 'var(--danger)';
+            } finally {
+                loginLoading.classList.remove('active');
+            }
+        }
+        
+        // Fetch devices
+        async function fetchDevices() {
+            try {
+                const response = await fetch(FACILITY_URL, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const devices = data.data.devices;
+                    
+                    // Clear existing options
+                    deviceSelect.innerHTML = '<option value="">-- Select a device --</option>';
+                    
+                    // Filter only devices with ISR or UK in the name
+                    const filteredDevices = devices.filter(device => 
+                        device.location.includes('ISR') || device.location.includes('UK')
+                    );
+                    
+                    // Update device count
+                    deviceCount = filteredDevices.length;
+                    deviceCountElement.textContent = deviceCount;
+                    
+                    // Add device options
+                    filteredDevices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device._id;
+                        option.textContent = device.location;
+                        deviceSelect.appendChild(option);
+                    });
+                    
+                    loginStatus.textContent = `Found ${filteredDevices.length} devices`;
+                    loginStatus.className = 'status success';
+                } else {
+                    throw new Error(`Failed to fetch devices: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Device fetch error:', error);
+                loginStatus.textContent = `Error: ${error.message}`;
+                loginStatus.className = 'status error';
+                deviceCountElement.textContent = '0';
+            }
+        }
+        
+        // Handle device selection
+        async function handleDeviceSelect() {
+            const deviceId = deviceSelect.value;
+            
+            if (!deviceId) {
+                datePicker.disabled = true;
+                plotBtn.disabled = true;
+                deviceTag.textContent = 'Select Device';
+                return;
+            }
+            
+            try {
+                plotLoading.classList.add('active');
+                plotStatus.textContent = 'Fetching device logs...';
+                plotStatus.className = 'status';
+                deviceTag.textContent = 'Loading Data';
+                
+                // Fetch device logs
+                const url = DEVICE_LOGS_URL.replace('{}', deviceId);
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const logs = data.data.logs;
+                    
+                    // Process logs
+                    deviceData[deviceId] = logs.map(log => ({
+                        fileUrl: log.fileUrl,
+                        createdAt: log.createdAt
+                    }));
+                    
+                    // Extract available dates
+                    availableDates = new Set();
+                    logs.forEach(log => {
+                        const date = extractDatePart(log.createdAt);
+                        availableDates.add(date);
+                    });
+                    
+                    // Enable date picker and plot button
+                    datePicker.disabled = false;
+                    plotBtn.disabled = false;
+                    deviceTag.textContent = 'Ready to Plot';
+                    deviceTag.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    deviceTag.style.color = 'var(--success)';
+                    
+                    plotStatus.textContent = `Loaded ${logs.length} logs spanning ${availableDates.size} dates`;
+                    plotStatus.className = 'status success';
+                } else {
+                    throw new Error(`Failed to fetch device logs: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Device logs fetch error:', error);
+                plotStatus.textContent = `Error: ${error.message}`;
+                plotStatus.className = 'status error';
+                deviceTag.textContent = 'Error';
+                deviceTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                deviceTag.style.color = 'var(--danger)';
+            } finally {
+                plotLoading.classList.remove('active');
+            }
+        }
+        
+        // Generate plot
+        async function generatePlot() {
+            const deviceId = deviceSelect.value;
+            const deviceName = deviceSelect.options[deviceSelect.selectedIndex].text;
+            const targetDate = datePicker.value;
+            const min = parseInt(bandMin.value);
+            const max = parseInt(bandMax.value);
+            
+            if (!deviceId || !targetDate || isNaN(min) || isNaN(max)) {
+                plotStatus.textContent = 'Please select a device, date, and valid frequency band';
+                plotStatus.className = 'status error';
+                return;
+            }
+            
+            try {
+                plotLoading.classList.add('active');
+                plotStatus.textContent = 'Processing data...';
+                plotStatus.className = 'status';
+                chartTag.textContent = 'Generating';
+                
+                const logs = deviceData[deviceId];
+                
+                // Filter logs for target date
+                const targetLogs = logs.filter(log => extractDatePart(log.createdAt) === targetDate);
+                
+                if (targetLogs.length === 0) {
+                    plotStatus.textContent = `No data available for ${targetDate}`;
+                    plotStatus.className = 'status';
+                    Plotly.purge(chartDiv);
+                    chartTag.textContent = 'No Data';
+                    dataPointsElement.textContent = '0';
+                    return;
+                }
+                
+                // Process each log file
+                const results = await Promise.all(targetLogs.map(async log => {
+                    try {
+                        const response = await fetch(log.fileUrl);
+                        if (!response.ok) throw new Error(`Failed to fetch CSV: ${response.status}`);
+                        
+                        const csvText = await response.text();
+                        
+                        // Parse CSV
+                        const parsedData = Papa.parse(csvText, {
+                            header: true,
+                            dynamicTyping: true,
+                            skipEmptyLines: true
+                        });
+                        
+                        // Filter by frequency band
+                        const filteredData = parsedData.data.filter(row => {
+                            const freq = row["Frequency (Hz)"];
+                            return freq > min && freq < max;
+                        });
+                        
+                        // Sum the power
+                        const total = filteredData.reduce((sum, row) => {
+                            return sum + (row[" Power Spectral Density (dB/Hz)"] || 0);
+                        }, 0);
+                        
+                        // Adding 2 hours to match the original Python code
+                        const date = new Date(log.createdAt);
+                        date.setHours(date.getHours() + 2);
+                        
+                        return {
+                            timestamp: date,
+                            total: total
+                        };
+                    } catch (error) {
+                        console.error(`Error processing log ${log.fileUrl}:`, error);
+                        return null;
+                    }
+                }));
+                
+                // Filter out nulls and sort by timestamp
+                const validResults = results.filter(r => r !== null).sort((a, b) => a.timestamp - b.timestamp);
+                
+                if (validResults.length === 0) {
+                    plotStatus.textContent = 'No valid data could be processed';
+                    plotStatus.className = 'status error';
+                    Plotly.purge(chartDiv);
+                    chartTag.textContent = 'No Valid Data';
+                    dataPointsElement.textContent = '0';
+                    return;
+                }
+                
+                // Update data points count
+                currentDataPoints = validResults.length;
+                dataPointsElement.textContent = currentDataPoints;
+                
+                // Prepare data for plotting
+                const times = validResults.map(r => r.timestamp.toTimeString().slice(0, 8));
+                const totals = validResults.map(r => r.total);
+                
+                // Create plot with custom styling
+                const plotData = [{
+                    x: times,
+                    y: totals,
+                    type: 'bar',
+                    marker: {
+                        color: 'rgba(37, 99, 235, 0.7)',
+                        line: {
+                            color: 'rgba(29, 78, 216, 1)',
+                            width: 1
+                        }
+                    },
+                    hoverinfo: 'y+text',
+                    hovertext: times.map(t => `Time: ${t}`)
+                }];
+                
+                const layout = {
+                    title: {
+                        text: `${deviceName} - Analysis for ${targetDate}`,
+                        font: {
+                            family: 'Poppins, sans-serif',
+                            size: 18,
+                            color: 'var(--secondary)'
+                        },
+                        x: 0.02,
+                        xanchor: 'left'
+                    },
+                    subtitle: {
+                        text: `Frequency Band: ${min}-${max} Hz`,
+                        font: {
+                            family: 'Poppins, sans-serif',
+                            size: 14,
+                            color: 'var(--text-light)'
+                        }
+                    },
+                    xaxis: {
+                        tickfont: {
+                            family: 'Poppins, sans-serif',
+                            size: 12,
+                            color: 'var(--text-light)'
+                        },
+                        gridcolor: 'rgba(226, 232, 240, 0.8)'
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Total Power (dB)',
+                            font: {
+                                family: 'Poppins, sans-serif',
+                                size: 14,
+                                color: 'var(--text)'
+                            }
+                        },
+                        tickfont: {
+                            family: 'Poppins, sans-serif',
+                            size: 12,
+                            color: 'var(--text-light)'
+                        },
+                        gridcolor: 'rgba(226, 232, 240, 0.8)'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    margin: {
+                        l: 60,
+                        r: 30,
+                        t: 80,
+                        b: 60
+                    },
+                    hoverlabel: {
+                        bgcolor: 'var(--secondary)',
+                        font: {
+                            family: 'Poppins, sans-serif',
+                            size: 12,
+                            color: 'white'
+                        }
+                    },
+                    annotations: [
+                        {
+                            text: `Frequency Band: ${min}-${max} Hz`,
+                            showarrow: false,
+                            x: 0.02,
+                            y: 1.05,
+                            xref: 'paper',
+                            yref: 'paper',
+                            xanchor: 'left',
+                            yanchor: 'bottom',
+                            font: {
+                                family: 'Poppins, sans-serif',
+                                size: 12,
+                                color: 'var(--text-light)'
+                            }
+                        }
+                    ]
+                };
+                
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    modeBarButtonsToRemove: [
+                        'lasso2d', 
+                        'select2d'
+                    ],
+                    displaylogo: false
+                };
+                
+                Plotly.newPlot(chartDiv, plotData, layout, config);
+                
+                plotStatus.textContent = `Generated chart with ${validResults.length} data points`;
+                plotStatus.className = 'status success';
+                chartTag.textContent = 'Generated';
+                chartTag.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                chartTag.style.color = 'var(--success)';
+            } catch (error) {
+                console.error('Plot generation error:', error);
+                plotStatus.textContent = `Error: ${error.message}`;
+                plotStatus.className = 'status error';
+                chartTag.textContent = 'Error';
+                chartTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                chartTag.style.color = 'var(--danger)';
+                dataPointsElement.textContent = '0';
+            } finally {
+                plotLoading.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
