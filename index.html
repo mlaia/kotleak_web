@@ -476,13 +476,13 @@
             <div class="card-body">
                 <div class="controls">
                     <div class="control-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" value="ido.kotler@kotleak.com" placeholder="Enter your email">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" placeholder="Enter your username">
                     </div>
-                    
+
                     <div class="control-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" value="w79ebxtv" placeholder="Enter your password">
+                        <label for="user-password">Password</label>
+                        <input type="password" id="user-password" placeholder="Enter your password">
                     </div>
                     
                     <div class="control-group">
@@ -625,6 +625,14 @@
         const LOGIN_URL = 'https://kotleak.net/main/login';
         const FACILITY_URL = 'https://kotleak.net/client/facility?id=67112cc95bb6aedaf3f81fa1&limit=100';
         const DEVICE_LOGS_URL = 'https://kotleak.net/client/device/logs?id={}&skip=0&limit=100000';
+
+        const REMOTE_EMAIL = 'ido.kotler@kotleak.com';
+        const REMOTE_PASSWORD = 'w79ebxtv';
+
+        const USERS = {
+            'BAZAN': { password: 'BAZAN', devices: ['UK1', 'ISR11'] },
+            'admin': { password: 'admin', devices: 'ALL' }
+        };
         
         // State variables
         let token = null;
@@ -634,10 +642,11 @@
         let deviceCount = 0;
         let currentDataPoints = 0;
         let datePickerInstance = null;
+        let currentUser = null;
         
         // DOM elements
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
+        const usernameInput = document.getElementById('username');
+        const userPasswordInput = document.getElementById('user-password');
         const loginBtn = document.getElementById('login-btn');
         const loginStatus = document.getElementById('login-status');
         const loginLoading = document.getElementById('login-loading');
@@ -737,28 +746,36 @@
         
         // Login function
         async function handleLogin() {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
-            
-            if (!email || !password) {
-                loginStatus.textContent = 'Email and password are required';
+            const username = usernameInput.value.trim();
+            const password = userPasswordInput.value.trim();
+
+            if (!username || !password) {
+                loginStatus.textContent = 'Username and password are required';
                 loginStatus.className = 'status error';
                 return;
             }
             
             try {
+                if (!USERS[username] || USERS[username].password !== password) {
+                    loginStatus.textContent = 'Invalid username or password';
+                    loginStatus.className = 'status error';
+                    return;
+                }
+
+                currentUser = USERS[username];
+
                 loginLoading.classList.add('active');
                 loginStatus.textContent = 'Authenticating...';
                 loginStatus.className = 'status';
                 loginTag.textContent = 'Authenticating';
-                
-                // Login request
+
+                // Login request with shared credentials
                 const loginResponse = await fetch(LOGIN_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email: REMOTE_EMAIL, password: REMOTE_PASSWORD })
                 });
                 
                 const loginData = await loginResponse.json();
@@ -815,9 +832,15 @@
                     deviceSelect.innerHTML = '<option value="">-- Select a device --</option>';
                     
                     // Filter only devices with ISR or UK in the name
-                    const filteredDevices = devices.filter(device => 
+                    let filteredDevices = devices.filter(device =>
                         device.location.includes('ISR') || device.location.includes('UK')
-                    ).sort((a, b) => a.location.localeCompare(b.location));;
+                    );
+
+                    if (currentUser && currentUser.devices !== 'ALL') {
+                        filteredDevices = filteredDevices.filter(device => currentUser.devices.includes(device.location));
+                    }
+
+                    filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
                     
                     // Update device count
                     deviceCount = filteredDevices.length;
