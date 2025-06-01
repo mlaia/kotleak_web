@@ -630,7 +630,15 @@
         const REMOTE_PASSWORD = 'w79ebxtv';
 
         const USERS = {
-            'BAZAN': { password: 'BAZAN', devices: ['UK01', 'UK02','ISR11', 'ISR10']},
+            'BAZAN': {
+                password: 'BAZAN',
+                devices: {
+                    '664b6f1ead3b1a2e12345678': 'UK01',
+                    '664b6f1ead3b1a2e12345679': 'UK02',
+                    '664b6f1ead3b1a2e1234567a': 'ISR11',
+                    '664b6f1ead3b1a2e1234567b': 'ISR10'
+                }
+            },
             'admin': { password: 'admin', devices: 'ALL' }
         };
         
@@ -837,7 +845,7 @@
                     );
 
                     if (currentUser && currentUser.devices !== 'ALL') {
-                        filteredDevices = filteredDevices.filter(device => currentUser.devices.includes(device.location));
+                        filteredDevices = filteredDevices.filter(device => currentUser.devices[device._id]);
                     }
 
                     filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
@@ -848,11 +856,15 @@
                     
                     // Add device rows
                     filteredDevices.forEach(device => {
+                        const name = currentUser && currentUser.devices !== 'ALL'
+                            ? (currentUser.devices[device._id] || device.location)
+                            : device.location;
+
                         const row = document.createElement('tr');
                         row.dataset.id = device._id;
-                        row.dataset.location = device.location;
+                        row.dataset.name = name;
                         row.innerHTML = `
-                            <td>${device._id}</td>
+                            <td>${name}</td>
                             <td>${device.location}</td>
                             <td id="leak-${device._id}">...</td>`;
                         deviceTableBody.appendChild(row);
@@ -922,7 +934,7 @@
             if (!row) return;
             deviceTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
-            handleDeviceSelect(row.dataset.id, row.dataset.location);
+            handleDeviceSelect(row.dataset.id, row.dataset.name);
         }
         
         // Handle device selection
