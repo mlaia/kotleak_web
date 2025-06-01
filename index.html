@@ -630,15 +630,7 @@
         const REMOTE_PASSWORD = 'w79ebxtv';
 
         const USERS = {
-            'BAZAN': {
-                password: 'BAZAN',
-                devices: {
-                    '664b6f1ead3b1a2e12345678': 'UK01',
-                    '664b6f1ead3b1a2e12345679': 'UK02',
-                    '664b6f1ead3b1a2e1234567a': 'ISR11',
-                    '664b6f1ead3b1a2e1234567b': 'ISR10'
-                }
-            },
+            'BAZAN': { password: 'BAZAN', devices: ['UK01', 'UK02','ISR11', 'ISR10'], place: ["Home", "Home", "Home", "ROOM"]},
             'admin': { password: 'admin', devices: 'ALL' }
         };
         
@@ -847,13 +839,14 @@
                     if (currentUser && currentUser.devices !== 'ALL') {
                         filteredDevices = filteredDevices.filter(device => currentUser.devices[device._id]);
                     }
-
+                    
                     filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
                     
                     // Update device count
                     deviceCount = filteredDevices.length;
                     deviceCountElement.textContent = deviceCount;
                     
+                    // Add device rows
                     // Add device rows
                     filteredDevices.forEach(device => {
                         const name = currentUser && currentUser.devices !== 'ALL'
@@ -862,10 +855,20 @@
 
                         const row = document.createElement('tr');
                         row.dataset.id = device._id;
-                        row.dataset.name = name;
+                        row.dataset.location = device.location;
+
+                        // Assign place if user-specific mapping is available
+                        let place = 'Unknown';
+                        if (currentUser && currentUser.devices !== 'ALL') {
+                            const index = currentUser.devices.indexOf(device.location);
+                            if (index !== -1 && currentUser.place && currentUser.place[index]) {
+                                place = currentUser.place[index];
+                            }
+                        }
+
                         row.innerHTML = `
-                            <td>${name}</td>
                             <td>${device.location}</td>
+                            <td>${place}</td>
                             <td id="leak-${device._id}">...</td>`;
                         deviceTableBody.appendChild(row);
                         computeLeak(device, document.getElementById(`leak-${device._id}`));
