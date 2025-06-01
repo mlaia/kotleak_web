@@ -512,9 +512,8 @@
             </div>
             
             <div class="stats-card">
-                <div class="stats-title">Data Points</div>
-                <div class="stats-value" id="data-points">0</div>
-                <div class="status">For Selected Device/Date</div>
+                <div class="stats-title" id="welcome-kot">Kotlers solutions</div>
+                <img id="kotlers" class="user-logo" src="https://cdn.prod.website-files.com/65ad3930b73a50781a216d52/65ad3c87bde0d3879d406e0c_Kotleak%20logo%20black.svg" alt="Kotleak Logo">
             </div>
             
             <div class="stats-card user-card">
@@ -1081,7 +1080,6 @@
                     plotStatus.className = 'status';
                     Plotly.purge(chartDiv);
                     chartTag.textContent = 'No Data';
-                    dataPointsElement.textContent = '0';
                     return;
                 }
                 
@@ -1139,17 +1137,15 @@
                     plotStatus.className = 'status error';
                     Plotly.purge(chartDiv);
                     chartTag.textContent = 'No Valid Data';
-                    dataPointsElement.textContent = '0';
                     return;
                 }
                 
                 // Update data points count
                 currentDataPoints = validResults.length;
-                dataPointsElement.textContent = currentDataPoints;
-                
+                const noise_floor = 130
                 // Prepare data for plotting
                 const times = validResults.map(r => r.timestamp.toTimeString().slice(0, 12));
-                const totals = validResults.map(r => r.total);
+                const totals = validResults.map(r => r.total - noise_floor);
                 
                 // Create plot with custom styling
                 const plotData = [{
@@ -1212,6 +1208,22 @@
                         },
                         gridcolor: 'rgba(226, 232, 240, 0.8)'
                     },
+                    shapes: [
+                        {
+                            type: 'line',
+                            xref: 'paper',
+                            x0: 0,
+                            x1: 1,
+                            yref: 'y',
+                            y0: 0,
+                            y1: 0,
+                            line: {
+                                color: 'red',
+                                width: 2,
+                                dash: 'dash' // optional
+                            }
+                        }
+                    ],
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     margin: {
@@ -1246,6 +1258,7 @@
                         }
                     ]
                 };
+
                 
                 const config = {
                     responsive: true,
@@ -1400,7 +1413,6 @@
                 chartTag.textContent = 'Error';
                 chartTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                 chartTag.style.color = 'var(--danger)';
-                dataPointsElement.textContent = '0';
             } finally {
                 plotLoading.classList.remove('active');
             }
