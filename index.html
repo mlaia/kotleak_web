@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KotLeak Data Visualization</title>
+    <link rel="icon" href="https://dashboard.kotleak.net/assets/images/icons/mob/Kotleak_mob_logo.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="https://dashboard.kotleak.net/assets/images/icons/mob/Kotleak_mob_logo.svg" type="image/svg+xml">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
@@ -36,26 +40,30 @@
             font-family: 'Poppins', sans-serif;
             background-color: var(--light-bg);
             color: var(--text);
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
+            margin: 0;
+            padding: 0;
             line-height: 1.6;
         }
         
         h1 {
             color: var(--secondary);
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin: 0;
             font-size: 1.8rem;
             text-align: center;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
+            padding-bottom: 0;
+            border-bottom: none;
+            transform: translateY(4px); /* Adjust text position to align with logo */
+            line-height: 1;
         }
         
         .container {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
         }
         
         .card {
@@ -206,27 +214,29 @@
             0% { opacity: 0.6; }
             50% { opacity: 1; }
             100% { opacity: 0.6; }
-        }
+        } 
         
         .dashboard-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            background-color: var(--light-bg);
+            padding: 1rem;
+            z-index: 1000;
+            margin: 0;
         }
         
         .logo {
-            width: 40px;
-            height: 40px;
-            margin-right: 1rem;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.5rem;
+            width: 150px;
+            height: auto;
+            display: block;
+            margin: 0;
         }
         
         .grid {
@@ -326,12 +336,135 @@
         .select-wrapper select {
             width: 100%;
         }
+
+        /* Date picker styles */
+        .flatpickr-calendar {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .flatpickr-day {
+            border-radius: 8px;
+            margin: 2px;
+            color: var(--text);
+        }
+
+        .flatpickr-day.available {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .flatpickr-day.available:hover {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .flatpickr-day.unavailable {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: var(--danger);
+            text-decoration: line-through;
+        }
+
+        .flatpickr-day.unavailable:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .flatpickr-day.selected {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .flatpickr-day.selected:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .flatpickr-months .flatpickr-month {
+            background: var(--secondary);
+            color: var(--white);
+            border-radius: 12px 12px 0 0;
+            padding: 8px 0;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flatpickr-current-month {
+            padding: 4px 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            color: var(--white);
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .flatpickr-weekday {
+            color: var(--text-light);
+        }
+
+        .flatpickr-day.today {
+            border-color: var(--primary);
+        }
+
+        .flatpickr-day.today:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .flatpickr-day.disabled {
+            color: var(--text-light);
+            background: var(--light-bg);
+        }
+
+        .flatpickr-day.disabled:hover {
+            background: var(--light-bg);
+            color: var(--text-light);
+        }
+
+        .device-details {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .info-card {
+            background-color: var(--light-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .info-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            color: var(--secondary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
     </style>
-</head>
+</body>
+</html>
 <body>
     <div class="dashboard-header">
-        <div class="logo">K</div>
-        <h1>KotLeak Data Visualization Dashboard</h1>
+        <img src="https://dashboard.kotleak.net/assets/images/Kotleak-logo.svg" alt="KotLeak Logo" class="logo">
+        <h1>Data Visualization Dashboard</h1>
     </div>
     
     <div class="container">
@@ -434,6 +567,31 @@
                         <div class="loading" id="plot-loading">Processing data...</div>
                     </div>
                 </div>
+
+                <!-- New Device Details Section -->
+                <div class="device-details" style="margin-top: 1.5rem; display: none;">
+                    <div class="card-header" style="background-color: var(--light-bg); color: var(--secondary);">
+                        Device Details
+                    </div>
+                    <div class="device-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div class="info-card">
+                            <div class="info-label">Battery</div>
+                            <div class="info-value" id="device-battery">-</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Memory</div>
+                            <div class="info-value" id="device-memory">-</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Gain Settings</div>
+                            <div class="info-value" id="device-gain">-</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Last Seen</div>
+                            <div class="info-value" id="device-last-seen">-</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -444,6 +602,20 @@
             </div>
             <div class="card-body">
                 <div id="chart"></div>
+                <div id="detailed-chart" style="display: none; margin-top: 2rem;">
+                    <div class="card-header" style="background-color: var(--light-bg); color: var(--secondary);">
+                        Detailed Frequency Analysis
+                        <span class="tag" id="detailed-chart-tag">Select time points to compare</span>
+                        <button id="clear-comparison" style="margin-left: auto; padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Clear Selection
+                        </button>
+                    </div>
+                    <div id="detailed-plot"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -451,7 +623,7 @@
     <script>
         // Constants
         const LOGIN_URL = 'https://kotleak.net/main/login';
-        const FACILITY_URL = 'https://kotleak.net/client/facility?id=67112cc95bb6aedaf3f81fa1';
+        const FACILITY_URL = 'https://kotleak.net/client/facility?id=67112cc95bb6aedaf3f81fa1&limit=100';
         const DEVICE_LOGS_URL = 'https://kotleak.net/client/device/logs?id={}&skip=0&limit=100000';
         
         // State variables
@@ -461,6 +633,7 @@
         let availableDates = new Set();
         let deviceCount = 0;
         let currentDataPoints = 0;
+        let datePickerInstance = null;
         
         // DOM elements
         const emailInput = document.getElementById('email');
@@ -483,10 +656,52 @@
         const chartTag = document.getElementById('chart-tag');
         const deviceCountElement = document.getElementById('device-count');
         const dataPointsElement = document.getElementById('data-points');
+        const deviceDetails = document.querySelector('.device-details');
+        const deviceBattery = document.getElementById('device-battery');
+        const deviceMemory = document.getElementById('device-memory');
+        const deviceGain = document.getElementById('device-gain');
         
         // Initialize date picker with today's date
         const today = new Date();
         datePicker.value = formatDate(today);
+        
+        // Initialize Flatpickr
+        function initializeDatePicker() {
+            if (datePickerInstance) {
+                datePickerInstance.destroy();
+            }
+
+            datePickerInstance = flatpickr(datePicker, {
+                dateFormat: "Y-m-d",
+                defaultDate: today,
+                disableMobile: true,
+                onChange: function(selectedDates, dateStr) {
+                    if (availableDates.has(dateStr)) {
+                        datePicker.classList.add('date-available');
+                        datePicker.classList.remove('date-unavailable');
+                    } else {
+                        datePicker.classList.add('date-unavailable');
+                        datePicker.classList.remove('date-available');
+                    }
+                },
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    // Format the date in YYYY-MM-DD format
+                    const date = dayElem.dateObj;
+                    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    
+                    if (availableDates.has(dateStr)) {
+                        dayElem.classList.add('available');
+                        dayElem.classList.remove('unavailable');
+                    } else {
+                        dayElem.classList.add('unavailable');
+                        dayElem.classList.remove('available');
+                    }
+                }
+            });
+        }
+
+        // Initialize date picker on page load
+        initializeDatePicker();
         
         // Event listeners
         loginBtn.addEventListener('click', handleLogin);
@@ -602,7 +817,7 @@
                     // Filter only devices with ISR or UK in the name
                     const filteredDevices = devices.filter(device => 
                         device.location.includes('ISR') || device.location.includes('UK')
-                    );
+                    ).sort((a, b) => a.location.localeCompare(b.location));;
                     
                     // Update device count
                     deviceCount = filteredDevices.length;
@@ -637,10 +852,18 @@
                 datePicker.disabled = true;
                 plotBtn.disabled = true;
                 deviceTag.textContent = 'Select Device';
+                deviceDetails.style.display = 'none';
+                // Reset detailed chart
+                document.getElementById('detailed-chart').style.display = 'none';
+                document.getElementById('detailed-chart-tag').textContent = 'Select time points to compare';
                 return;
             }
             
             try {
+                // Reset detailed chart
+                document.getElementById('detailed-chart').style.display = 'none';
+                document.getElementById('detailed-chart-tag').textContent = 'Select time points to compare';
+                
                 plotLoading.classList.add('active');
                 plotStatus.textContent = 'Fetching device logs...';
                 plotStatus.className = 'status';
@@ -657,6 +880,9 @@
                 if (response.ok) {
                     const data = await response.json();
                     const logs = data.data.logs;
+                    const deviceInfo = data.data.device;
+                    
+                    console.log('Device info:', deviceInfo);
                     
                     // Process logs
                     deviceData[deviceId] = logs.map(log => ({
@@ -670,13 +896,41 @@
                         const date = extractDatePart(log.createdAt);
                         availableDates.add(date);
                     });
-                    
+
+                    // Log available dates
+                    console.log('Available dates for device:', Array.from(availableDates).sort());
+
                     // Enable date picker and plot button
                     datePicker.disabled = false;
                     plotBtn.disabled = false;
                     deviceTag.textContent = 'Ready to Plot';
                     deviceTag.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
                     deviceTag.style.color = 'var(--success)';
+
+                    // Reinitialize date picker with available dates
+                    initializeDatePicker();
+                    
+                    // Display device information
+                    if (deviceInfo) {
+                        console.log('Device data found:', deviceInfo);
+                        deviceDetails.style.display = 'block';
+                        deviceBattery.textContent = deviceInfo.battery ? Math.floor(deviceInfo.battery) + '%' : '-';
+                        deviceMemory.textContent = deviceInfo.memory ? `${deviceInfo.memory}%` : '-';
+                        deviceGain.textContent = deviceInfo.gainSettings !== undefined ? 
+                            `Gain ${deviceInfo.gainSettings}` : '-';
+                        
+                        // Format and display last seen time
+                        const lastSeenElement = document.getElementById('device-last-seen');
+                        if (deviceInfo.lastUpdate) {
+                            const lastUpdate = new Date(deviceInfo.lastUpdate);
+                            lastSeenElement.textContent = lastUpdate.toLocaleString().replace(',', '');
+                        } else {
+                            lastSeenElement.textContent = '-';
+                        }
+                    } else {
+                        console.log('No device data found');
+                        deviceDetails.style.display = 'none';
+                    }
                     
                     plotStatus.textContent = `Loaded ${logs.length} logs spanning ${availableDates.size} dates`;
                     plotStatus.className = 'status success';
@@ -690,6 +944,7 @@
                 deviceTag.textContent = 'Error';
                 deviceTag.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                 deviceTag.style.color = 'var(--danger)';
+                deviceDetails.style.display = 'none';
             } finally {
                 plotLoading.classList.remove('active');
             }
@@ -752,16 +1007,22 @@
                         
                         // Sum the power
                         const total = filteredData.reduce((sum, row) => {
-                            return sum + (row[" Power Spectral Density (dB/Hz)"] || 0);
+                            const power = row[" Power Spectral Density (dB/Hz)"] || 0;
+                            return sum + Math.pow(10.0, power / 10.0);
                         }, 0);
+                        
+                        // Convert sum back to dB
+                        const totalDb = 10 * Math.log10(total);
                         
                         // Adding 2 hours to match the original Python code
                         const date = new Date(log.createdAt);
-                        date.setHours(date.getHours() + 2);
+                        date.setHours(date.getHours());
                         
                         return {
                             timestamp: date,
-                            total: total
+                            total: totalDb,
+                            fileUrl: log.fileUrl,
+                            rawData: parsedData.data // Store the full CSV data
                         };
                     } catch (error) {
                         console.error(`Error processing log ${log.fileUrl}:`, error);
@@ -786,7 +1047,7 @@
                 dataPointsElement.textContent = currentDataPoints;
                 
                 // Prepare data for plotting
-                const times = validResults.map(r => r.timestamp.toTimeString().slice(0, 8));
+                const times = validResults.map(r => r.timestamp.toTimeString().slice(0, 12));
                 const totals = validResults.map(r => r.total);
                 
                 // Create plot with custom styling
@@ -802,7 +1063,8 @@
                         }
                     },
                     hoverinfo: 'y+text',
-                    hovertext: times.map(t => `Time: ${t}`)
+                    hovertext: times.map(t => `Time: ${t.slice(0,5)}`),
+                    customdata: validResults.map(r => r.rawData) // Store raw data for click events
                 }];
                 
                 const layout = {
@@ -825,6 +1087,7 @@
                         }
                     },
                     xaxis: {
+                        tickmode: 'auto',
                         tickfont: {
                             family: 'Poppins, sans-serif',
                             size: 12,
@@ -894,6 +1157,135 @@
                 };
                 
                 Plotly.newPlot(chartDiv, plotData, layout, config);
+
+                // Add click event handler
+                let selectedPoints = [];
+                
+                // Add clear button handler
+                document.getElementById('clear-comparison').addEventListener('click', function() {
+                    selectedPoints = [];
+                    document.getElementById('detailed-chart').style.display = 'none';
+                    document.getElementById('detailed-chart-tag').textContent = 'Select time points to compare';
+                });
+
+                chartDiv.on('plotly_click', function(data) {
+                    const pointIndex = data.points[0].pointIndex;
+                    const rawData = validResults[pointIndex].rawData;
+                    const timestamp = times[pointIndex];
+                    
+                    // Show detailed chart section
+                    document.getElementById('detailed-chart').style.display = 'block';
+                    
+                    // Update selected points
+                    if (selectedPoints.length === 0) {
+                        selectedPoints = [{
+                            index: pointIndex,
+                            data: rawData,
+                            timestamp: timestamp
+                        }];
+                        document.getElementById('detailed-chart-tag').textContent = `Selected first point: ${timestamp}`;
+                    } else if (selectedPoints.length === 1) {
+                        selectedPoints.push({
+                            index: pointIndex,
+                            data: rawData,
+                            timestamp: timestamp
+                        });
+                        document.getElementById('detailed-chart-tag').textContent = `Comparing ${selectedPoints[0].timestamp} and ${timestamp}`;
+                    } else {
+                        // Replace the second point
+                        selectedPoints[1] = {
+                            index: pointIndex,
+                            data: rawData,
+                            timestamp: timestamp
+                        };
+                        document.getElementById('detailed-chart-tag').textContent = `Comparing ${selectedPoints[0].timestamp} and ${timestamp}`;
+                    }
+                    
+                    // Create detailed line plot
+                    const plotData = selectedPoints.map((point, idx) => ({
+                        x: point.data.map(row => row["Frequency (Hz)"]),
+                        y: point.data.map(row => row[" Power Spectral Density (dB/Hz)"]),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: point.timestamp,
+                        line: {
+                            color: idx === 0 ? 'rgba(37, 99, 235, 0.8)' : 'rgba(239, 68, 68, 0.8)',
+                            width: 2
+                        }
+                    }));
+                    
+                    const detailedLayout = {
+                        title: {
+                            text: 'Frequency Spectrum Comparison',
+                            font: {
+                                family: 'Poppins, sans-serif',
+                                size: 16,
+                                color: 'var(--secondary)'
+                            }
+                        },
+                        xaxis: {
+                            title: {
+                                text: 'Frequency (Hz)',
+                                font: {
+                                    family: 'Poppins, sans-serif',
+                                    size: 14,
+                                    color: 'var(--text)'
+                                }
+                            },
+                            tickfont: {
+                                family: 'Poppins, sans-serif',
+                                size: 12,
+                                color: 'var(--text-light)'
+                            },
+                            gridcolor: 'rgba(226, 232, 240, 0.8)'
+                        },
+                        yaxis: {
+                            title: {
+                                text: 'Power Spectral Density (dB/Hz)',
+                                font: {
+                                    family: 'Poppins, sans-serif',
+                                    size: 14,
+                                    color: 'var(--text)'
+                                }
+                            },
+                            tickfont: {
+                                family: 'Poppins, sans-serif',
+                                size: 12,
+                                color: 'var(--text-light)'
+                            },
+                            gridcolor: 'rgba(226, 232, 240, 0.8)'
+                        },
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        margin: {
+                            l: 60,
+                            r: 30,
+                            t: 60,
+                            b: 60
+                        },
+                        hoverlabel: {
+                            bgcolor: 'var(--secondary)',
+                            font: {
+                                family: 'Poppins, sans-serif',
+                                size: 12,
+                                color: 'white'
+                            }
+                        },
+                        showlegend: true,
+                        legend: {
+                            x: 0,
+                            y: 1.1,
+                            orientation: 'h',
+                            font: {
+                                family: 'Poppins, sans-serif',
+                                size: 12,
+                                color: 'var(--text)'
+                            }
+                        }
+                    };
+                    
+                    Plotly.newPlot('detailed-plot', plotData, detailedLayout, config);
+                });
                 
                 plotStatus.textContent = `Generated chart with ${validResults.length} data points`;
                 plotStatus.className = 'status success';
