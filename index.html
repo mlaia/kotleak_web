@@ -287,8 +287,9 @@
             text-align: center;
         }
         .user-logo {
-            width: 150px;
-            height: auto;
+            width: auto;      /* or a specific width if you want */
+            height: 75px;    /* this is your forced height */
+            object-fit: contain; /* or 'cover', depending on your use case */
         }
         select {
             appearance: none;
@@ -841,7 +842,7 @@
                     );
 
                     if (currentUser && currentUser.devices !== 'ALL') {
-                        filteredDevices = filteredDevices.filter(device => currentUser.devices[device._id]);
+                        filteredDevices = filteredDevices.filter(device => currentUser.devices.includes(device.location))
                     }
                     
                     filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
@@ -850,7 +851,6 @@
                     deviceCount = filteredDevices.length;
                     deviceCountElement.textContent = deviceCount;
                     
-                    // Add device rows
                     // Add device rows
                     filteredDevices.forEach(device => {
                         const name = currentUser && currentUser.devices !== 'ALL'
