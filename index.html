@@ -945,9 +945,8 @@
 
                 cell.textContent = leakDetected ? 'true' : 'false';
                 cell.parentElement.style.backgroundColor = leakDetected 
-                    ? 'rgba(16, 185, 129, 0.1)'  // green
-                    : 'rgba(239, 68, 68, 0.1)'; // red
-
+                    ? 'rgba(239, 68, 68, 0.1)' // red
+                    : 'rgba(16, 185, 129, 0.1)'  // green
             } catch (e) {
                 console.error('Leak calculation error', e);
                 cell.textContent = 'error';
