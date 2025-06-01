@@ -304,37 +304,31 @@
             border-color: var(--primary);
         }
 
-        /* Add more spacing to the device options for better readability */
-        #device-select option {
-            padding: 8px;
-        }
-
         /* Consistent height for all form controls */
         select, input, button {
             height: 2.8rem;
             line-height: 1.2;
         }
-            /* Additional styling for the select wrapper */
-        .select-wrapper {
-            position: relative;
+        /* Table styles for device list */
+        #device-table {
             width: 100%;
+            border-collapse: collapse;
         }
-        
-        .select-wrapper:after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 2.8rem;
-            pointer-events: none;
-            border-left: 1px solid var(--border);
-            border-radius: 0 8px 8px 0;
-            background-color: rgba(241, 245, 249, 0.3);
+
+        #device-table th,
+        #device-table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            text-align: left;
         }
-        
-        .select-wrapper select {
-            width: 100%;
+
+        #device-table tbody tr:hover {
+            background-color: var(--light-bg);
+            cursor: pointer;
+        }
+
+        #device-table .selected-row {
+            background-color: rgba(37, 99, 235, 0.1);
         }
 
         /* Date picker styles */
@@ -531,13 +525,18 @@
             </div>
             <div class="card-body">
                 <div class="controls">
-                    <div class="control-group">
-                        <label for="device-select">Device</label>
-                        <div class="select-wrapper">
-                            <select id="device-select" disabled>
-                                <option value="">-- Select a device --</option>
-                            </select>
-                        </div>
+                    <div class="control-group" style="flex: 1 1 100%;">
+                        <label>Devices</label>
+                        <table id="device-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Location</th>
+                                    <th>Leak</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
                     
                     <div class="control-group">
@@ -625,12 +624,21 @@
         const LOGIN_URL = 'https://kotleak.net/main/login';
         const FACILITY_URL = 'https://kotleak.net/client/facility?id=67112cc95bb6aedaf3f81fa1&limit=100';
         const DEVICE_LOGS_URL = 'https://kotleak.net/client/device/logs?id={}&skip=0&limit=100000';
+        const LEAK_THRESHOLD = 130;
 
         const REMOTE_EMAIL = 'ido.kotler@kotleak.com';
         const REMOTE_PASSWORD = 'w79ebxtv';
 
         const USERS = {
-            'BAZAN': { password: 'BAZAN', devices: ['UK01', 'UK02','ISR11', 'ISR10']},
+            'BAZAN': {
+                password: 'BAZAN',
+                devices: {
+                    '664b6f1ead3b1a2e12345678': 'UK01',
+                    '664b6f1ead3b1a2e12345679': 'UK02',
+                    '664b6f1ead3b1a2e1234567a': 'ISR11',
+                    '664b6f1ead3b1a2e1234567b': 'ISR10'
+                }
+            },
             'admin': { password: 'admin', devices: 'ALL' }
         };
         
@@ -638,6 +646,7 @@
         let token = null;
         let deviceData = {};
         let selectedDevice = null;
+        let selectedDeviceName = null;
         let availableDates = new Set();
         let deviceCount = 0;
         let currentDataPoints = 0;
@@ -651,7 +660,7 @@
         const loginStatus = document.getElementById('login-status');
         const loginLoading = document.getElementById('login-loading');
         const loginTag = document.getElementById('login-tag');
-        const deviceSelect = document.getElementById('device-select');
+        const deviceTableBody = document.querySelector('#device-table tbody');
         const datePicker = document.getElementById('date-picker');
         const bandMin = document.getElementById('band-min');
         const bandMax = document.getElementById('band-max');
@@ -714,7 +723,7 @@
         
         // Event listeners
         loginBtn.addEventListener('click', handleLogin);
-        deviceSelect.addEventListener('change', handleDeviceSelect);
+        deviceTableBody.addEventListener('click', handleTableClick);
         plotBtn.addEventListener('click', generatePlot);
         
         // Update frequency band display when inputs change
@@ -791,8 +800,7 @@
                     // Now fetch device IDs
                     await fetchDevices();
                     
-                    // Enable device selection
-                    deviceSelect.disabled = false;
+                    // Device list ready
                     deviceTag.textContent = 'Ready';
                     
                 } else {
@@ -828,8 +836,8 @@
                     const data = await response.json();
                     const devices = data.data.devices;
                     
-                    // Clear existing options
-                    deviceSelect.innerHTML = '<option value="">-- Select a device --</option>';
+                    // Clear existing table rows
+                    deviceTableBody.innerHTML = '';
                     
                     // Filter only devices with ISR or UK in the name
                     let filteredDevices = devices.filter(device =>
@@ -837,7 +845,7 @@
                     );
 
                     if (currentUser && currentUser.devices !== 'ALL') {
-                        filteredDevices = filteredDevices.filter(device => currentUser.devices.includes(device.location));
+                        filteredDevices = filteredDevices.filter(device => currentUser.devices[device._id]);
                     }
 
                     filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
@@ -846,12 +854,21 @@
                     deviceCount = filteredDevices.length;
                     deviceCountElement.textContent = deviceCount;
                     
-                    // Add device options
+                    // Add device rows
                     filteredDevices.forEach(device => {
-                        const option = document.createElement('option');
-                        option.value = device._id;
-                        option.textContent = device.location;
-                        deviceSelect.appendChild(option);
+                        const name = currentUser && currentUser.devices !== 'ALL'
+                            ? (currentUser.devices[device._id] || device.location)
+                            : device.location;
+
+                        const row = document.createElement('tr');
+                        row.dataset.id = device._id;
+                        row.dataset.name = name;
+                        row.innerHTML = `
+                            <td>${name}</td>
+                            <td>${device.location}</td>
+                            <td id="leak-${device._id}">...</td>`;
+                        deviceTableBody.appendChild(row);
+                        computeLeak(device, document.getElementById(`leak-${device._id}`));
                     });
                     
                     loginStatus.textContent = `Found ${filteredDevices.length} devices`;
@@ -866,10 +883,64 @@
                 deviceCountElement.textContent = '0';
             }
         }
+
+        // Calculate leak status for a device
+        async function computeLeak(device, cell) {
+            try {
+                const url = DEVICE_LOGS_URL.replace('{}', device._id);
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('log fetch');
+
+                const data = await response.json();
+                const logs = data.data.logs;
+                if (!logs || logs.length === 0) {
+                    cell.textContent = 'false';
+                    return;
+                }
+
+                logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const lastLog = logs[0];
+                const csvResp = await fetch(lastLog.fileUrl);
+                if (!csvResp.ok) throw new Error('csv fetch');
+                const csvText = await csvResp.text();
+                const parsed = Papa.parse(csvText, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true
+                });
+                const min = parseInt(bandMin.value);
+                const max = parseInt(bandMax.value);
+                const filtered = parsed.data.filter(r => {
+                    const f = r["Frequency (Hz)"];
+                    return f > min && f < max;
+                });
+                const total = filtered.reduce((sum, r) => {
+                    const p = r[" Power Spectral Density (dB/Hz)"] || 0;
+                    return sum + Math.pow(10.0, p / 10.0);
+                }, 0);
+                const totalDb = 10 * Math.log10(total);
+                cell.textContent = totalDb > LEAK_THRESHOLD ? 'true' : 'false';
+            } catch (e) {
+                console.error('Leak calculation error', e);
+                cell.textContent = 'error';
+            }
+        }
+
+        // Handle click on device table
+        function handleTableClick(event) {
+            const row = event.target.closest('tr');
+            if (!row) return;
+            deviceTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+            row.classList.add('selected-row');
+            handleDeviceSelect(row.dataset.id, row.dataset.name);
+        }
         
         // Handle device selection
-        async function handleDeviceSelect() {
-            const deviceId = deviceSelect.value;
+        async function handleDeviceSelect(deviceId, deviceLocation) {
+            selectedDevice = deviceId;
+            selectedDeviceName = deviceLocation;
             
             if (!deviceId) {
                 datePicker.disabled = true;
@@ -975,8 +1046,8 @@
         
         // Generate plot
         async function generatePlot() {
-            const deviceId = deviceSelect.value;
-            const deviceName = deviceSelect.options[deviceSelect.selectedIndex].text;
+            const deviceId = selectedDevice;
+            const deviceName = selectedDeviceName;
             const targetDate = datePicker.value;
             const min = parseInt(bandMin.value);
             const max = parseInt(bandMax.value);
