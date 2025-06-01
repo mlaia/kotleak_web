@@ -837,7 +837,7 @@
                     );
 
                     if (currentUser && currentUser.devices !== 'ALL') {
-                        filteredDevices = filteredDevices.filter(device => currentUser.devices.includes(device.location));
+                        filteredDevices = filteredDevices.filter(device => currentUser.devices[device._id]);
                     }
                     
                     filteredDevices = filteredDevices.sort((a, b) => a.location.localeCompare(b.location));
@@ -849,6 +849,10 @@
                     // Add device rows
                     // Add device rows
                     filteredDevices.forEach(device => {
+                        const name = currentUser && currentUser.devices !== 'ALL'
+                            ? (currentUser.devices[device._id] || device.location)
+                            : device.location;
+
                         const row = document.createElement('tr');
                         row.dataset.id = device._id;
                         row.dataset.location = device.location;
@@ -933,7 +937,7 @@
             if (!row) return;
             deviceTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
-            handleDeviceSelect(row.dataset.id, row.dataset.location);
+            handleDeviceSelect(row.dataset.id, row.dataset.name);
         }
         
         // Handle device selection
