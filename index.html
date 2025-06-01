@@ -332,12 +332,22 @@
         }
 
         #device-table tbody tr:hover {
-            background-color: var(--light-bg);
+            background-color: rgba(37, 99, 235, 0.05);
             cursor: pointer;
+            transition: background-color 0.2s ease;
         }
 
         #device-table .selected-row {
             background-color: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+
+        #device-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        #device-table tbody tr:hover td {
+            color: var(--primary);
         }
 
         /* Date picker styles */
@@ -461,9 +471,12 @@
             font-size: 1.1rem;
             font-weight: 600;
         }
+        .selected-row {
+        background-color: rgba(59, 130, 246, 0.1); /* Light blue */
+        border-left: 4px solid #3b82f6;            /* Blue bar */
+    }
     </style>
-</body>
-</html>
+</head>
 <body>
     <div class="dashboard-header">
         <img src="https://dashboard.kotleak.net/assets/images/Kotleak-logo.svg" alt="KotLeak Logo" class="logo">
@@ -903,6 +916,7 @@
                 const logs = data.data.logs;
                 if (!logs || logs.length === 0) {
                     cell.textContent = 'false';
+                    cell.parentElement.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; // red
                     return;
                 }
 
@@ -927,10 +941,17 @@
                     return sum + Math.pow(10.0, p / 10.0);
                 }, 0);
                 const totalDb = 10 * Math.log10(total);
-                cell.textContent = totalDb > LEAK_THRESHOLD ? 'true' : 'false';
+                const leakDetected = totalDb > LEAK_THRESHOLD;
+
+                cell.textContent = leakDetected ? 'true' : 'false';
+                cell.parentElement.style.backgroundColor = leakDetected 
+                    ? 'rgba(16, 185, 129, 0.1)'  // green
+                    : 'rgba(239, 68, 68, 0.1)'; // red
+
             } catch (e) {
                 console.error('Leak calculation error', e);
                 cell.textContent = 'error';
+                cell.parentElement.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; // red
             }
         }
 
@@ -940,7 +961,7 @@
             if (!row) return;
             deviceTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
             row.classList.add('selected-row');
-            handleDeviceSelect(row.dataset.id, row.dataset.name);
+            handleDeviceSelect(row.dataset.id, row.dataset.location);
         }
         
         // Handle device selection
