@@ -647,7 +647,10 @@
         const REMOTE_PASSWORD = 'w79ebxtv';
 
         const USERS = {
-            'BAZAN': { password: 'BAZAN', devices: ['UK01', 'UK02','ISR11', 'ISR10'], place: ["Home", "Home", "Home", "ROOM"], logo: 'https://media.bazan.co.il/bazan/media/pkojrroh/logo-header.png' },
+            'BAZAN': { password: 'BAZAN', devices: ['UK01', 'UK02','ISR11', 'ISR10'], place: [], logo: 'https://media.bazan.co.il/bazan/media/pkojrroh/logo-header.png' },
+            'carlsberg': { password: 'carlsberg', devices: ['ISR14', 'ISR15','ISR16', 'ISR17', 'ISR18', 'ISR19'], place: [" קו 9 שירוול אחורי", "קו 9 אקו פלוקס", "Unknown", "קו 9 שירוול", "קו 9 אקו פלוקס אחורי"], logo: 'https://www.carlsberg.co.il/src/assets/images/bottom_logo.png' },
+            'strauss': { password: 'strauss', devices: ['ISR19', 'ISR20','ISR21', 'ISR22', 'ISR23'], place: [], logo: 'https://www.strauss-group.co.il/wp-content/themes/retlehs-roots-43f44a4/images/header_logo.svg' },
+
             'admin': { password: 'admin', devices: 'ALL', logo: '' }
         };
         
@@ -753,6 +756,22 @@
         // Helper to extract date from ISO date string (YYYY-MM-DD)
         function extractDatePart(isoString) {
             return isoString.split('T')[0];
+        }
+        
+        // Helper to parse timestamp and handle timezone correctly
+        function parseTimestamp(timestampString) {
+            // Parse the timestamp and convert to local time
+            const date = new Date(timestampString);
+            return date;
+        }
+        
+        // Helper to get local date string from timestamp
+        function getLocalDateString(timestampString) {
+            const date = new Date(timestampString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         
         // Login function
@@ -1010,15 +1029,14 @@
                         createdAt: log.createdAt
                     }));
                     
-                    // Extract available dates
+                    // Extract available dates using local time
                     availableDates = new Set();
                     logs.forEach(log => {
-                        const date = extractDatePart(log.createdAt);
+                        const date = getLocalDateString(log.createdAt);
                         availableDates.add(date);
                     });
 
-                    // Log available dates
-                    console.log('Available dates for device:', Array.from(availableDates).sort());
+
 
                     // Enable date picker and plot button
                     datePicker.disabled = false;
@@ -1032,7 +1050,6 @@
                     
                     // Display device information
                     if (deviceInfo) {
-                        console.log('Device data found:', deviceInfo);
                         deviceDetails.style.display = 'block';
                         deviceBattery.textContent = deviceInfo.battery ? Math.floor(deviceInfo.battery) + '%' : '-';
                         deviceMemory.textContent = deviceInfo.memory ? `${deviceInfo.memory}%` : '-';
@@ -1048,7 +1065,6 @@
                             lastSeenElement.textContent = '-';
                         }
                     } else {
-                        console.log('No device data found');
                         deviceDetails.style.display = 'none';
                     }
                     
@@ -1092,8 +1108,11 @@
                 
                 const logs = deviceData[deviceId];
                 
-                // Filter logs for target date
-                const targetLogs = logs.filter(log => extractDatePart(log.createdAt) === targetDate);
+                // Filter logs for target date - convert to local time for comparison
+                const targetLogs = logs.filter(log => {
+                    const logDateStr = getLocalDateString(log.createdAt);
+                    return logDateStr === targetDate;
+                });
                 
                 if (targetLogs.length === 0) {
                     plotStatus.textContent = `No data available for ${targetDate}`;
@@ -1133,9 +1152,8 @@
                         // Convert sum back to dB
                         const totalDb = 10 * Math.log10(total);
                         
-                        // Adding 2 hours to match the original Python code
-                        const date = new Date(log.createdAt);
-                        date.setHours(date.getHours());
+                        // Parse timestamp with proper timezone handling
+                        const date = parseTimestamp(log.createdAt);
                         
                         return {
                             timestamp: date,
@@ -1164,7 +1182,15 @@
                 currentDataPoints = validResults.length;
                 const noise_floor = 130
                 // Prepare data for plotting
-                const times = validResults.map(r => r.timestamp.toTimeString().slice(0, 12));
+                // Format time in local timezone without timezone offset display
+                const times = validResults.map(r => {
+                    // Get local time components
+                    const hours = r.timestamp.getHours().toString().padStart(2, '0');
+                    const minutes = r.timestamp.getMinutes().toString().padStart(2, '0');
+                    const seconds = r.timestamp.getSeconds().toString().padStart(2, '0');
+                    const timeStr = `${hours}:${minutes}:${seconds}`;
+                    return timeStr;
+                });
                 const totals = validResults.map(r => r.total - noise_floor);
                 
                 // Create plot with custom styling
